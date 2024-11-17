@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Asistencia</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: url('https://example.com/tu-imagen.jpg') no-repeat center center fixed;
+            background-size: cover;
+            color: white;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            backdrop-filter: blur(5px);
+            padding: 0 20px; /* Espaciado lateral para igualar los bordes */
+        }
+        form {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            max-width: 400px; /* Ancho máximo para el formulario */
+            text-align: center;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+        }
+        input {
+            margin-bottom: 20px;
+            padding: 10px;
+            width: calc(100% - 40px); /* Ajustar el ancho considerando el padding */
+            border: none;
+            border-radius: 5px;
+            margin-left: 20px; /* Margen izquierdo */
+            margin-right: 20px; /* Margen derecho */
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 80%; /* Ancho del botón reducido */
+            max-width: 200px; /* Ancho máximo para el botón */
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #message {
+            margin-top: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <form id="attendanceForm">
+            <h1>Control de Asistencia</h1>
+            <label for="name">Nombre del Estudiante:</label>
+            <input type="text" id="name" name="name" required>
+
+            <label for="grade">Grado:</label>
+            <input type="text" id="grade" name="grade" placeholder="Escribir el grado" required>
+
+            <label for="curriculumContent">Contenidos del Plan de Desarrollo Curricular:</label>
+            <input type="text" id="curriculumContent" name="curriculumContent" required>
+
+            <label for="date">Fecha</label>
+            <input type="text" id="date" name="date" readonly required>
+
+            <label for="time">Hora:</label>
+            <input type="text" id="time" name="time" readonly required>
+
+            <button type="submit">Enviar</button>
+            <div id="message"></div>
+        </form>
+    </div>
+
+    <script>
+        // Establecer la fecha automáticamente
+        const now = new Date();
+        const formattedDate = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}`; // DD/MM/AAAA
+        document.getElementById('date').value = formattedDate;
+
+        // Actualizar la hora cada segundo
+        setInterval(() => {
+            const now = new Date();
+            let hours = now.getHours();
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            const seconds = now.getSeconds().toString().padStart(2, '0');
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12; // The hour '0' should be '12'
+            const formattedTime = `${hours}:${minutes}:${seconds} ${ampm}`; // HH:MM:SS AM/PM
+            document.getElementById('time').value = formattedTime;
+        }, 1000);
+
+        document.getElementById('attendanceForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            // Desactivar el botón de envío
+            const submitButton = this.querySelector('button[type="submit"]');
+            submitButton.disabled = true;
+
+            const name = document.getElementById('name').value.trim();
+            const grade = document.getElementById('grade').value.trim();
+            const curriculumContent = document.getElementById('curriculumContent').value.trim();
+            const date = document.getElementById('date').value;
+            const time = document.getElementById('time').value;
+
+            // URL del script de Google Apps
+            const url = 'https://script.google.com/macros/s/AKfycbxAP2Sz7KGtAZCtVAJPVvS7Dux9vj-pwYeIUCEqCRSMS93NTqglk02QB5Rlg2ik0-MM/exec';
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `name=${encodeURIComponent(name)}&grade=${encodeURIComponent(grade)}&curriculumContent=${encodeURIComponent(curriculumContent)}&date=${encodeURIComponent(date)}&time=${encodeURIComponent(time)}`
+            })
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('message').innerText = data;
+                this.reset();
+                document.getElementById('date').value = formattedDate; // Resetear fecha
+                // La hora se actualizará constantemente, no es necesario resetearla
+            })
+            .catch(error => {
+                document.getElementById('message').innerText = 'Error al enviar la asistencia';
+            })
+            .finally(() => {
+                // Volver a habilitar el botón de envío en caso de error o éxito
+                submitButton.disabled = false;
+            });
+        });
+    </script>
+</body>
+</html>
